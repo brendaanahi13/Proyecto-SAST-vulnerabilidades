@@ -1,9 +1,7 @@
 import java.io.*;
 import java.sql.*;
 
-public class FileReaderApp {
-
-    static String apiKey = "12345-ABCDE"; // Hardcoded API Key
+public class FileReaderAppFixed {
 
     public static void main(String[] args) {
 
@@ -12,7 +10,10 @@ public class FileReaderApp {
             String filename = args[0];
             String userId = args[1];
 
-            // Path Traversal
+            if(!filename.matches("[a-zA-Z0-9._-]+")){
+                throw new IllegalArgumentException("Archivo inválido");
+            }
+
             BufferedReader br = new BufferedReader(
                 new FileReader("/data/files/" + filename)
             );
@@ -22,17 +23,19 @@ public class FileReaderApp {
                 System.out.println(line);
             }
 
+            String password = System.getenv("DB_PASSWORD");
+
             Connection conn = DriverManager.getConnection(
                 "jdbc:mysql://localhost:3306/app",
                 "root",
-                "root"
+                password
             );
 
-            Statement stmt = conn.createStatement();
+            String query = "DELETE FROM users WHERE id = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setInt(1, Integer.parseInt(userId));
 
-            // SQL Injection
-            String query = "DELETE FROM users WHERE id = " + userId;
-            stmt.execute(query);
+            stmt.execute();
 
         } catch(Exception e){
             e.printStackTrace();
